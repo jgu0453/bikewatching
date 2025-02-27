@@ -5,15 +5,15 @@ mapboxgl.accessToken = 'pk.eyJ1Ijoiamd1MDQ1MyIsImEiOiJjbTdteTlwMDAwa3g1MmxvZzBnZ
 
 // Initialize the map
 const map = new mapboxgl.Map({
-    container: 'map', // This must match the id in your HTML
-    style: 'mapbox://styles/mapbox/streets-v11', // Use Mapbox Streets style
+    container: 'map', // Matches the id in index.html
+    style: 'mapbox://styles/mapbox/streets-v11', // Map style
     center: [-71.0589, 42.3601], // Boston coordinates
     zoom: 12
 });
 
 // Fetch and display bike lanes and stations
 map.on('load', async () => {
-    // Adding bike lanes as previously done
+    // Adding bike lanes
     map.addSource('boston-bike-lanes', {
         type: 'geojson',
         data: 'https://bostonopendata-boston.opendata.arcgis.com/datasets/boston::existing-bike-network-2022.geojson'
@@ -31,8 +31,8 @@ map.on('load', async () => {
 
     // Load Bluebikes stations data
     const jsonurl = 'https://dsc106.com/labs/lab07/data/bluebikes-stations.json';
-    let stations;
-    
+    let stations = [];
+
     try {
         const jsonData = await d3.json(jsonurl);
         console.log('Loaded JSON Data:', jsonData);
@@ -41,46 +41,74 @@ map.on('load', async () => {
         console.error('Error loading JSON:', error);
     }
 
-    // Create SVG container for the station markers
+    // Create SVG overlay for stations
     const container = map.getCanvasContainer();
-    const svg = d3.select(container).select('svg')
+    const svg = d3.select(container)
+        .append('svg')
         .style('position', 'absolute')
         .style('z-index', 1)
         .style('width', '100%')
         .style('height', '100%')
-        .style('pointer-events', 'none'); // Allow interaction with map below
+        .style('pointer-events', 'none'); // Allows interaction with the map
 
-    // Helper function to convert lat/lon to map pixel coordinates
+    // Helper function to project coordinates onto the map
     function getCoords(station) {
-        const point = new mapboxgl.LngLat(station.Long, station.Lat); // Convert lon/lat to Mapbox LngLat
-        const { x, y } = map.project(point); // Project to pixel coordinates
-        return { cx: x, cy: y }; // Return as object for use in SVG attributes
+        const point = new mapboxgl.LngLat(station.lon, station.lat);
+        const { x, y } = map.project(point);
+        return { cx: x, cy: y };
     }
 
-    // Append circles for each station
-    const circles = svg.selectAll('circle')
-        .data(stations)
-        .enter()
-        .append('circle')
-        .attr('r', 5) // Radius of the circle
-        .attr('fill', 'steelblue') // Circle fill color
-        .attr('stroke', 'white') // Circle border color
-        .attr('stroke-width', 1) // Circle border thickness
-        .attr('opacity', 0.8); // Circle opacity
+    // Function to filter stations by selected hour
+    function filterStationsByHour(hour) {
+        return stations.filter(station => station.capacity > hour); // Example filter logic
+    }
 
-    // Function to update circle positions on map movements
+    // Function to update displayed stations
+    function updateStations(hour) {
+        const filteredStations = filterStationsByHour(hour);
+
+        // Bind data to circles
+        const circles = svg.selectAll('circle')
+            .data(filteredStations, d => d.station_id);
+
+        // Enter (Create new circles)
+        circles.enter()
+            .append('circle')
+            .attr('r', 5)
+            .attr('fill', 'steelblue')
+            .attr('stroke', 'white')
+            .attr('stroke-width', 1)
+            .attr('opacity', 0.8)
+            .merge(circles) // Merge with existing elements
+            .attr('cx', d => getCoords(d).cx)
+            .attr('cy', d => getCoords(d).cy);
+
+        // Exit (Remove old circles)
+        circles.exit().remove();
+    }
+
+    // Update stations initially
+    updateStations(12);
+
+    // Update on map movements
     function updatePositions() {
-        circles
-            .attr('cx', d => getCoords(d).cx) // Set the x-position using projected coordinates
-            .attr('cy', d => getCoords(d).cy); // Set the y-position using projected coordinates
+        svg.selectAll('circle')
+            .attr('cx', d => getCoords(d).cx)
+            .attr('cy', d => getCoords(d).cy);
     }
 
-    // Initial position update when map loads
-    updatePositions();
+    map.on('move', updatePositions);
+    map.on('zoom', updatePositions);
+    map.on('resize', updatePositions);
+    map.on('moveend', updatePositions);
 
-    // Reposition markers on map interactions
-    map.on('move', updatePositions);     // Update during map movement
-    map.on('zoom', updatePositions);     // Update during zooming
-    map.on('resize', updatePositions);   // Update on window resize
-    map.on('moveend', updatePositions);  // Final adjustment after movement ends
+    // Handle time slider input
+    const timeSlider = document.getElementById('timeSlider');
+    const timeDisplay = document.getElementById('timeDisplay');
+
+    timeSlider.addEventListener('input', (event) => {
+        const selectedHour = event.target.value;
+        timeDisplay.textContent = selectedHour;
+        updateStations(selectedHour);
+    });
 });
