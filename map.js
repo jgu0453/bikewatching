@@ -17,7 +17,7 @@ const map = new mapboxgl.Map({
 map.on('load', () => {
     map.addSource('bike-lanes', {
         type: 'geojson',
-        data: 'https://data.boston.gov/dataset/51fa15c4-3b99-4c23-b4b4-6326fc4b2c72/resource/86b86b52-3519-4a82-9993-5ac9e1b4f562/download/bike-network.geojson' // Example URL for bike lanes
+        data: 'https://bostonopendata-boston.opendata.arcgis.com/datasets/boston::existing-bike-network-2022.geojson'
     });
 
     map.addLayer({
