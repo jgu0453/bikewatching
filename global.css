@@ -18,3 +18,10 @@ body {
 input[type="range"] {
     width: 200px;
 }
+
+.traffic-marker {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: steelblue;  /* Default color */
+}
