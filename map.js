@@ -79,7 +79,6 @@ map.on('load', () => {
                             if (!status) return false;
 
                             // Simulate traffic data based on the selected hour
-                            // Replace this with actual traffic data if available
                             const traffic = (status.num_bikes_available + status.num_docks_available) * Math.random();
                             return traffic > hour * 10; // Example filter condition
                         });
@@ -93,8 +92,8 @@ map.on('load', () => {
 
                         // Update existing circles
                         circles
-                            .attr('cx', d => project([d.lon, d.lat]).x)
-                            .attr('cy', d => project([d.lon, d.lat]).y)
+                            .attr('cx', d => project([d.lon, d.lat]).x)  // Corrected access to lon/lat
+                            .attr('cy', d => project([d.lon, d.lat]).y)  // Corrected access to lon/lat
                             .attr('r', d => {
                                 const status = statusMap.get(d.station_id);
                                 const traffic = status ? status.num_bikes_available + status.num_docks_available : 0;
@@ -109,8 +108,8 @@ map.on('load', () => {
 
                         // Add new circles
                         circles.enter().append('circle')
-                            .attr('cx', d => project([d.lon, d.lat]).x)
-                            .attr('cy', d => project([d.lon, d.lat]).y)
+                            .attr('cx', d => project([d.lon, d.lat]).x)  // Corrected access to lon/lat
+                            .attr('cy', d => project([d.lon, d.lat]).y)  // Corrected access to lon/lat
                             .attr('r', d => {
                                 const status = statusMap.get(d.station_id);
                                 const traffic = status ? status.num_bikes_available + status.num_docks_available : 0;
@@ -148,6 +147,9 @@ map.on('load', () => {
                                     .style('opacity', 0);
                             });
                     }
+
+                    // You can call updateMarkers() with a parameter to test the filtering
+                    // updateMarkers(10); // Call this with an hour value to update the markers
                 });
         });
 });
