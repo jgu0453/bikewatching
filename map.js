@@ -148,7 +148,4 @@ map.on('load', () => {
                                     .style('opacity', 0);
                             });
                     }
-
-                    // Initial marker
-::contentReference[oaicite:0]{index=0}
  
