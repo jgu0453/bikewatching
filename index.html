@@ -15,15 +15,14 @@
     <h1>Boston Bike Traffic Map</h1>
     <p>Interactive visualization of bike lanes and stations in Boston.</p>
     
-    <div id="map"></div>
+    <div id="map">
+        <svg></svg> <!-- Add SVG for station markers -->
+    </div>
 
     <div id="controls">
         <label for="timeSlider">Filter by Hour:</label>
         <input type="range" id="timeSlider" min="0" max="23" value="12">
         <p>Selected Hour: <span id="timeDisplay">12</span></p>
     </div>
-
-    <!-- Tooltip container for displaying information when hovering over bike stations -->
-    <div id="tooltip" style="position: absolute; background: rgba(0, 0, 0, 0.7); color: white; padding: 5px; border-radius: 3px; pointer-events: none; opacity: 0; transition: opacity 0.2s;"></div>
 </body>
 </html>
