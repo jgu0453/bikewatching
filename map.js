@@ -1,5 +1,5 @@
 import mapboxgl from 'https://cdn.jsdelivr.net/npm/mapbox-gl@2.15.0/+esm';
-import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
+import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7.9.0/+esm';
 
 mapboxgl.accessToken = 'pk.eyJ1Ijoiamd1MDQ1MyIsImEiOiJjbTdteTlwMDAwa3g1MmxvZzBnZXhtNXpqIn0.sRi55mUQZUJ49c5ze8QLmg';
 
@@ -11,9 +11,9 @@ const map = new mapboxgl.Map({
     zoom: 12
 });
 
-// Load bike lanes data
-map.on('load', () => {
-    // Add Boston bike lanes
+// Fetch and display bike lanes and stations
+map.on('load', async () => {
+    // Adding bike lanes as previously done
     map.addSource('boston-bike-lanes', {
         type: 'geojson',
         data: 'https://bostonopendata-boston.opendata.arcgis.com/datasets/boston::existing-bike-network-2022.geojson'
@@ -29,127 +29,58 @@ map.on('load', () => {
         }
     });
 
-    // Add Cambridge bike lanes (Updated URL)
-    map.addSource('cambridge-bike-lanes', {
-        type: 'geojson',
-        data: 'https://raw.githubusercontent.com/cambridgegis/cambridgegis_data/main/Recreation/Bike_Facilities/RECREATION_BikeFacilities.geojson'
-    });
+    // Load Bluebikes stations data
+    const jsonurl = 'https://dsc106.com/labs/lab07/data/bluebikes-stations.json';
+    let stations;
+    
+    try {
+        const jsonData = await d3.json(jsonurl);
+        console.log('Loaded JSON Data:', jsonData);
+        stations = jsonData.data.stations;
+    } catch (error) {
+        console.error('Error loading JSON:', error);
+    }
 
-    map.addLayer({
-        id: 'cambridge-bike-lanes-layer',
-        type: 'line',
-        source: 'cambridge-bike-lanes',
-        paint: {
-            'line-color': '#00FF00',
-            'line-width': 3
-        }
-    });
+    // Create SVG container for the station markers
+    const container = map.getCanvasContainer();
+    const svg = d3.select(container).select('svg')
+        .style('position', 'absolute')
+        .style('z-index', 1)
+        .style('width', '100%')
+        .style('height', '100%')
+        .style('pointer-events', 'none'); // Allow interaction with map below
 
-    // Fetch and display bike stations
-    fetch('https://gbfs.bluebikes.com/gbfs/en/station_information.json')
-        .then(response => response.json())
-        .then(stationData => {
-            // Fetch station status data
-            fetch('https://gbfs.bluebikes.com/gbfs/en/station_status.json')
-                .then(response => response.json())
-                .then(statusData => {
-                    const stations = stationData.data.stations;
-                    const statuses = statusData.data.stations;
+    // Helper function to convert lat/lon to map pixel coordinates
+    function getCoords(station) {
+        const point = new mapboxgl.LngLat(station.Long, station.Lat); // Convert lon/lat to Mapbox LngLat
+        const { x, y } = map.project(point); // Project to pixel coordinates
+        return { cx: x, cy: y }; // Return as object for use in SVG attributes
+    }
 
-                    // Create a mapping of station_id to status
-                    const statusMap = new Map();
-                    statuses.forEach(status => {
-                        statusMap.set(status.station_id, status);
-                    });
+    // Append circles for each station
+    const circles = svg.selectAll('circle')
+        .data(stations)
+        .enter()
+        .append('circle')
+        .attr('r', 5) // Radius of the circle
+        .attr('fill', 'steelblue') // Circle fill color
+        .attr('stroke', 'white') // Circle border color
+        .attr('stroke-width', 1) // Circle border thickness
+        .attr('opacity', 0.8); // Circle opacity
 
-                    // Create an SVG overlay for D3
-                    const container = map.getCanvasContainer();
-                    const svg = d3.select(container).append('svg');
+    // Function to update circle positions on map movements
+    function updatePositions() {
+        circles
+            .attr('cx', d => getCoords(d).cx) // Set the x-position using projected coordinates
+            .attr('cy', d => getCoords(d).cy); // Set the y-position using projected coordinates
+    }
 
-                    // Function to project latitude and longitude to pixel coordinates
-                    function project([lng, lat]) {
-                        return map.project(new mapboxgl.LngLat(lng, lat));
-                    }
+    // Initial position update when map loads
+    updatePositions();
 
-                    // Function to update station markers
-                    function updateMarkers(hour) {
-                        // Filter stations based on the selected hour
-                        const filteredStations = stations.filter(station => {
-                            const status = statusMap.get(station.station_id);
-                            if (!status) return false;
-
-                            // Simulate traffic data based on the selected hour
-                            const traffic = (status.num_bikes_available + status.num_docks_available) * Math.random();
-                            return traffic > hour * 10; // Example filter condition
-                        });
-
-                        // Bind data to circles
-                        const circles = svg.selectAll('circle')
-                            .data(filteredStations, d => d.station_id);
-
-                        // Remove old circles
-                        circles.exit().remove();
-
-                        // Update existing circles
-                        circles
-                            .attr('cx', d => project([d.lon, d.lat]).x)  // Corrected access to lon/lat
-                            .attr('cy', d => project([d.lon, d.lat]).y)  // Corrected access to lon/lat
-                            .attr('r', d => {
-                                const status = statusMap.get(d.station_id);
-                                const traffic = status ? status.num_bikes_available + status.num_docks_available : 0;
-                                return Math.sqrt(traffic); // Radius proportional to traffic
-                            })
-                            .attr('fill', d => {
-                                const status = statusMap.get(d.station_id);
-                                if (!status) return '#ccc';
-                                const ratio = status.num_bikes_available / (status.num_bikes_available + status.num_docks_available);
-                                return d3.interpolateRdYlGn(ratio); // Color based on availability ratio
-                            });
-
-                        // Add new circles
-                        circles.enter().append('circle')
-                            .attr('cx', d => project([d.lon, d.lat]).x)  // Corrected access to lon/lat
-                            .attr('cy', d => project([d.lon, d.lat]).y)  // Corrected access to lon/lat
-                            .attr('r', d => {
-                                const status = statusMap.get(d.station_id);
-                                const traffic = status ? status.num_bikes_available + status.num_docks_available : 0;
-                                return Math.sqrt(traffic); // Radius proportional to traffic
-                            })
-                            .attr('fill', d => {
-                                const status = statusMap.get(d.station_id);
-                                if (!status) return '#ccc';
-                                const ratio = status.num_bikes_available / (status.num_bikes_available + status.num_docks_available);
-                                return d3.interpolateRdYlGn(ratio); // Color based on availability ratio
-                            })
-                            .attr('stroke', '#fff')
-                            .attr('stroke-width', 1)
-                            .on('mouseover', function (event, d) {
-                                const status = statusMap.get(d.station_id);
-                                const traffic = status ? status.num_bikes_available + status.num_docks_available : 0;
-                                const content = `
-                                    <strong>${d.name}</strong><br/>
-                                    Bikes Available: ${status ? status.num_bikes_available : 'N/A'}<br/>
-                                    Docks Available: ${status ? status.num_docks_available : 'N/A'}<br/>
-                                    Total Capacity: ${traffic}
-                                `;
-                                d3.select('#tooltip')
-                                    .html(content)
-                                    .style('left', `${event.pageX + 5}px`)
-                                    .style('top', `${event.pageY - 28}px`)
-                                    .transition()
-                                    .duration(200)
-                                    .style('opacity', .9);
-                            })
-                            .on('mouseout', function () {
-                                d3.select('#tooltip')
-                                    .transition()
-                                    .duration(500)
-                                    .style('opacity', 0);
-                            });
-                    }
-
-                    // You can call updateMarkers() with a parameter to test the filtering
-                    // updateMarkers(10); // Call this with an hour value to update the markers
-                });
-        });
+    // Reposition markers on map interactions
+    map.on('move', updatePositions);     // Update during map movement
+    map.on('zoom', updatePositions);     // Update during zooming
+    map.on('resize', updatePositions);   // Update on window resize
+    map.on('moveend', updatePositions);  // Final adjustment after movement ends
 });
