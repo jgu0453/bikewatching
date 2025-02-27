@@ -7,10 +7,21 @@
     <link rel="stylesheet" href="global.css">
     <script defer src="map.js"></script>
     <link rel="icon" href="assets/favicon.svg">
+
+    <!-- Mapbox Library -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.16.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.16.0/mapbox-gl.js"></script>
 </head>
 <body>
     <h1>Boston Bike Traffic Map</h1>
     <p>Interactive visualization of bike lanes and stations in Boston.</p>
+    
     <div id="map"></div>
+
+    <div id="controls">
+        <label for="timeSlider">Filter by Hour:</label>
+        <input type="range" id="timeSlider" min="0" max="23" value="12">
+        <p>Selected Hour: <span id="timeDisplay">12</span></p>
+    </div>
 </body>
 </html>
