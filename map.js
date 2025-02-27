@@ -1,5 +1,5 @@
 // Replace with your actual Mapbox access token
-mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';  // Replace with your Mapbox token
+mapboxgl.accessToken = 'pk.eyJ1Ijoiamd1MDQ1MyIsImEiOiJjbTdteTlwMDAwa3g1MmxvZzBnZXhtNXpqIn0.sRi55mUQZUJ49c5ze8QLmg';
 
 const map = new mapboxgl.Map({
     container: 'map',  // This must match the id in your HTML
