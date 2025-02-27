@@ -29,10 +29,10 @@ map.on('load', () => {
         }
     });
 
-    // Add Cambridge bike lanes
+    // Add Cambridge bike lanes (Updated URL)
     map.addSource('cambridge-bike-lanes', {
         type: 'geojson',
-        data: 'https://data.cambridgema.gov/api/geospatial/ghcn-3j3q?method=export&format=GeoJSON'
+        data: 'https://raw.githubusercontent.com/cambridgegis/cambridgegis_data/main/Recreation/Bike_Facilities/RECREATION_BikeFacilities.geojson'
     });
 
     map.addLayer({
