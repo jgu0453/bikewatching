@@ -10,3 +10,11 @@ body {
     height: 500px;
     margin-top: 20px;
 }
+
+#controls {
+    margin-top: 20px;
+}
+
+input[type="range"] {
+    width: 200px;
+}
