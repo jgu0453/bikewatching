@@ -1,10 +1,10 @@
-// Replace with your Mapbox access token
-mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
+// Replace with your actual Mapbox access token
+mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';  // Replace with your Mapbox token
 
 const map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/mapbox/streets-v11',
-    center: [-71.0589, 42.3601], // Boston coordinates
+    container: 'map',  // This must match the id in your HTML
+    style: 'mapbox://styles/mapbox/streets-v11',  // Use Mapbox Streets style
+    center: [-71.0589, 42.3601],  // Boston coordinates
     zoom: 12
 });
 
@@ -12,7 +12,7 @@ const map = new mapboxgl.Map({
 map.on('load', () => {
     map.addSource('bike-lanes', {
         type: 'geojson',
-        data: 'https://data.boston.gov/dataset/51fa15c4-3b99-4c23-b4b4-6326fc4b2c72/resource/86b86b52-3519-4a82-9993-5ac9e1b4f562/download/bike-network.geojson' // Example URL
+        data: 'https://data.boston.gov/dataset/51fa15c4-3b99-4c23-b4b4-6326fc4b2c72/resource/86b86b52-3519-4a82-9993-5ac9e1b4f562/download/bike-network.geojson' // Example URL for bike lanes
     });
 
     map.addLayer({
