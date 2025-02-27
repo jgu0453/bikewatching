@@ -3,6 +3,9 @@ import mapboxgl from 'https://cdn.jsdelivr.net/npm/mapbox-gl@2.15.0/+esm';
 // Replace with your actual Mapbox access token
 mapboxgl.accessToken = 'pk.eyJ1Ijoiamd1MDQ1MyIsImEiOiJjbTdteTlwMDAwa3g1MmxvZzBnZXhtNXpqIn0.sRi55mUQZUJ49c5ze8QLmg';
 
+// Check that Mapbox GL JS is loaded
+console.log("Mapbox GL JS Loaded:", mapboxgl);
+
 const map = new mapboxgl.Map({
     container: 'map',  // This must match the id in your HTML
     style: 'mapbox://styles/mapbox/streets-v11',  // Use Mapbox Streets style
